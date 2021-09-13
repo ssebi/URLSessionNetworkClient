@@ -5,27 +5,20 @@ import URLSessionNetworkClient
 
 final class URLSessionNetworkClientTests: XCTestCase {
 
-    func test_getFromURL_resumesDataTaskWithURL() {
-        let (sut, spy) = makeSUT()
-        let task = URLSessionDataTaskSpy()
-        spy.stub(url: someURL, task: task)
-
-        sut.get(from: someURL) { _ in }
-
-        XCTAssertEqual(task.resumeCallCount, 1)
-    }
-
     func test_getFromURL_failsOnRequestError() {
-        let (sut, spy) = makeSUT()
+        URLProtocolStub.startInterceptingRequests()
+        let sut = makeSUT()
         let url = someURL
         let error = someError
-        spy.stub(url: url, error: error)
+        URLProtocolStub.stub(url: url, error: error)
 
         let exp = expectation(description: "Wait for completion")
+
         sut.get(from: url) { result in
             switch result {
                 case let .failure(receivedError as NSError):
-                    XCTAssertEqual(receivedError, error)
+                    XCTAssertEqual(receivedError.domain, error.domain)
+                    XCTAssertEqual(receivedError.code, error.code)
                 default:
                     XCTFail("Expected failure with error \(error), got \(result) instead")
             }
@@ -33,16 +26,15 @@ final class URLSessionNetworkClientTests: XCTestCase {
         }
 
         wait(for: [exp], timeout: 0.1)
+        URLProtocolStub.stopInterceptingReqeusts()
     }
 
     // MARK: - Helpers
 
-    private func makeSUT(file: StaticString = #filePath, line: UInt = #line) -> (sut: URLSessionNetworkClient, spy: URLSessionSpy) {
-        let spy = URLSessionSpy()
-        let sut = URLSessionNetworkClient(session: spy)
-        trackForMemoryLeaks(spy, file: file, line: line)
+    private func makeSUT(file: StaticString = #filePath, line: UInt = #line) -> URLSessionNetworkClient {
+        let sut = URLSessionNetworkClient(session: .shared)
         trackForMemoryLeaks(sut, file: file, line: line)
-        return (sut, spy)
+        return sut
     }
 
     func trackForMemoryLeaks(_ instance: AnyObject, file: StaticString = #filePath, line: UInt = #line) {
@@ -55,36 +47,51 @@ final class URLSessionNetworkClientTests: XCTestCase {
     private let someError = NSError(domain: "Test", code: 0)
 
 
-    class URLSessionSpy: HTTPSession {
+    class URLProtocolStub: URLProtocol {
 
-        private var stubs = [URL: Stub]()
+        private static var stubs = [URL: Stub]()
 
         private struct Stub {
-            let task: HTTPSessionTask
             let error: Error?
         }
 
-        func stub(url: URL, task: HTTPSessionTask = URLSessionDataTaskSpy(), error: Error? = nil) {
-            stubs[url] = Stub(task: task, error: error)
+        static func stub(url: URL, error: Error? = nil) {
+            stubs[url] = Stub(error: error)
         }
 
-        func dataTask(with url: URL, completionHandler: @escaping (Data?, URLResponse?, Error?) -> Void) -> HTTPSessionTask {
-            guard let stub = stubs[url] else {
-                fatalError("Couldn't find stub for the given url \(url)")
+        static func startInterceptingRequests() {
+            URLProtocol.registerClass(URLProtocolStub.self)
+        }
+
+        static func stopInterceptingReqeusts() {
+            URLProtocol.unregisterClass(URLProtocolStub.self)
+            stubs = [:]
+        }
+
+        override class func canInit(with request: URLRequest) -> Bool {
+            guard let url = request.url else {
+                return false
             }
-            completionHandler(nil, nil, stub.error)
-            return stub.task
+            return stubs[url] != nil
         }
 
-    }
-
-    private class URLSessionDataTaskSpy: HTTPSessionTask {
-
-        var resumeCallCount = 0
-
-        func resume() {
-            resumeCallCount += 1
+        override class func canonicalRequest(for request: URLRequest) -> URLRequest {
+            return request
         }
+
+        override func startLoading() {
+            guard let url = request.url, let stub = Self.stubs[url] else {
+                return
+            }
+
+            if let error = stub.error {
+                client?.urlProtocol(self, didFailWithError: error)
+            }
+
+            client?.urlProtocolDidFinishLoading(self)
+        }
+
+        override func stopLoading() { }
 
     }
 
