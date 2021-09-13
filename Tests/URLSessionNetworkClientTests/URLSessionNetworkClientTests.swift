@@ -1,6 +1,8 @@
 import XCTest
 import URLSessionNetworkClient
 
+
+
 final class URLSessionNetworkClientTests: XCTestCase {
 
     func test_getFromURL_resumesDataTaskWithURL() {
@@ -53,20 +55,20 @@ final class URLSessionNetworkClientTests: XCTestCase {
     private let someError = NSError(domain: "Test", code: 0)
 
 
-    class URLSessionSpy: URLSession {
+    class URLSessionSpy: HTTPSession {
 
         private var stubs = [URL: Stub]()
 
         private struct Stub {
-            let task: URLSessionDataTask
+            let task: HTTPSessionTask
             let error: Error?
         }
 
-        func stub(url: URL, task: URLSessionDataTask = URLSessionDataTaskSpy(), error: Error? = nil) {
+        func stub(url: URL, task: HTTPSessionTask = URLSessionDataTaskSpy(), error: Error? = nil) {
             stubs[url] = Stub(task: task, error: error)
         }
 
-        override func dataTask(with url: URL, completionHandler: @escaping (Data?, URLResponse?, Error?) -> Void) -> URLSessionDataTask {
+        func dataTask(with url: URL, completionHandler: @escaping (Data?, URLResponse?, Error?) -> Void) -> HTTPSessionTask {
             guard let stub = stubs[url] else {
                 fatalError("Couldn't find stub for the given url \(url)")
             }
@@ -76,17 +78,11 @@ final class URLSessionNetworkClientTests: XCTestCase {
 
     }
 
-    private class FakeURLSessionDataTask: URLSessionDataTask {
-
-        override func resume() { }
-
-    }
-
-    private class URLSessionDataTaskSpy: URLSessionDataTask {
+    private class URLSessionDataTaskSpy: HTTPSessionTask {
 
         var resumeCallCount = 0
 
-        override func resume() {
+        func resume() {
             resumeCallCount += 1
         }
 
