@@ -3,14 +3,6 @@ import URLSessionNetworkClient
 
 final class URLSessionNetworkClientTests: XCTestCase {
 
-    func test_getFromURL_createsDataTaskWithURL() {
-        let (sut, spy) = makeSUT()
-
-        sut.get(from: someURL) { _ in }
-
-        XCTAssertEqual(spy.receivedURLS, [someURL])
-    }
-
     func test_getFromURL_resumesDataTaskWithURL() {
         let (sut, spy) = makeSUT()
         let task = URLSessionDataTaskSpy()
@@ -42,7 +34,6 @@ final class URLSessionNetworkClientTests: XCTestCase {
 
     class URLSessionSpy: URLSession {
 
-        var receivedURLS = [URL]()
         private var stubs = [URL: URLSessionDataTask]()
 
         func stub(url: URL, task: URLSessionDataTask) {
@@ -50,7 +41,6 @@ final class URLSessionNetworkClientTests: XCTestCase {
         }
 
         override func dataTask(with url: URL, completionHandler: @escaping (Data?, URLResponse?, Error?) -> Void) -> URLSessionDataTask {
-            receivedURLS.append(url)
             return stubs[url] ?? FakeURLSessionDataTask()
         }
 
