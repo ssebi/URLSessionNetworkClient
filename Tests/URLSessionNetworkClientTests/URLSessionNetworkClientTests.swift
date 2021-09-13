@@ -7,9 +7,30 @@ final class URLSessionNetworkClientTests: XCTestCase {
         let (sut, spy) = makeSUT()
         let task = URLSessionDataTaskSpy()
         spy.stub(url: someURL, task: task)
+
         sut.get(from: someURL) { _ in }
 
         XCTAssertEqual(task.resumeCallCount, 1)
+    }
+
+    func test_getFromURL_failsOnRequestError() {
+        let (sut, spy) = makeSUT()
+        let url = someURL
+        let error = someError
+        spy.stub(url: url, error: error)
+
+        let exp = expectation(description: "Wait for completion")
+        sut.get(from: url) { result in
+            switch result {
+                case let .failure(receivedError as NSError):
+                    XCTAssertEqual(receivedError, error)
+                default:
+                    XCTFail("Expected failure with error \(error), got \(result) instead")
+            }
+            exp.fulfill()
+        }
+
+        wait(for: [exp], timeout: 0.1)
     }
 
     // MARK: - Helpers
@@ -34,14 +55,23 @@ final class URLSessionNetworkClientTests: XCTestCase {
 
     class URLSessionSpy: URLSession {
 
-        private var stubs = [URL: URLSessionDataTask]()
+        private var stubs = [URL: Stub]()
 
-        func stub(url: URL, task: URLSessionDataTask) {
-            stubs[url] = task
+        private struct Stub {
+            let task: URLSessionDataTask
+            let error: Error?
+        }
+
+        func stub(url: URL, task: URLSessionDataTask = URLSessionDataTaskSpy(), error: Error? = nil) {
+            stubs[url] = Stub(task: task, error: error)
         }
 
         override func dataTask(with url: URL, completionHandler: @escaping (Data?, URLResponse?, Error?) -> Void) -> URLSessionDataTask {
-            return stubs[url] ?? FakeURLSessionDataTask()
+            guard let stub = stubs[url] else {
+                fatalError("Couldn't find stub for the given url \(url)")
+            }
+            completionHandler(nil, nil, stub.error)
+            return stub.task
         }
 
     }
