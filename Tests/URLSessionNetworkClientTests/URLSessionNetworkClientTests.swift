@@ -4,10 +4,16 @@ import URLSessionNetworkClient
 
 final class URLSessionNetworkClientTests: XCTestCase {
 
-    func test_getFromURL_performsGETRequestsWithURL() {
+    override class func setUp() {
         URLProtocolStub.startInterceptingRequests()
+    }
 
-        let sut = makeSUT()
+    override class func tearDown() {
+        URLProtocolStub.stopInterceptingReqeusts()
+    }
+
+    func test_getFromURL_performsGETRequestsWithURL() {
+
         let exp = expectation(description: "Wait for request")
 
         URLProtocolStub.observedRequests { request in
@@ -16,22 +22,19 @@ final class URLSessionNetworkClientTests: XCTestCase {
             exp.fulfill()
         }
 
-        sut.get(from: someURL, completion: { _ in })
+        makeSUT().get(from: someURL, completion: { _ in })
 
         wait(for: [exp], timeout: 0.1)
-        URLProtocolStub.stopInterceptingReqeusts()
     }
 
     func test_getFromURL_failsOnRequestError() {
-        URLProtocolStub.startInterceptingRequests()
-        let sut = makeSUT()
         let url = someURL
         let error = someError
         URLProtocolStub.stub(data: nil, response: nil, error: error)
 
         let exp = expectation(description: "Wait for completion")
 
-        sut.get(from: url) { result in
+        makeSUT().get(from: url) { result in
             switch result {
                 case let .failure(receivedError as NSError):
                     XCTAssertEqual(receivedError.domain, error.domain)
@@ -43,7 +46,6 @@ final class URLSessionNetworkClientTests: XCTestCase {
         }
 
         wait(for: [exp], timeout: 0.1)
-        URLProtocolStub.stopInterceptingReqeusts()
     }
 
     // MARK: - Helpers
@@ -64,7 +66,7 @@ final class URLSessionNetworkClientTests: XCTestCase {
     private let someError = NSError(domain: "Test", code: 0)
 
 
-    class URLProtocolStub: URLProtocol {
+    private class URLProtocolStub: URLProtocol {
 
         private static var stub: Stub?
         private static var requestObserver: ((URLRequest) -> Void)?
