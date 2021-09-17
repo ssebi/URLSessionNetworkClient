@@ -13,7 +13,6 @@ final class URLSessionNetworkClientTests: XCTestCase {
     }
 
     func test_getFromURL_performsGETRequestsWithURL() {
-
         let exp = expectation(description: "Wait for request")
 
         URLProtocolStub.observedRequests { request in
@@ -28,13 +27,11 @@ final class URLSessionNetworkClientTests: XCTestCase {
     }
 
     func test_getFromURL_failsOnRequestError() {
-        let url = someURL
         let error = someError
         URLProtocolStub.stub(data: nil, response: nil, error: error)
-
         let exp = expectation(description: "Wait for completion")
 
-        makeSUT().get(from: url) { result in
+        makeSUT().get(from: someURL) { result in
             switch result {
                 case let .failure(receivedError as NSError):
                     XCTAssertEqual(receivedError.domain, error.domain)
