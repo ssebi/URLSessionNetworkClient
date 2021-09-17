@@ -27,22 +27,16 @@ final class URLSessionNetworkClientTests: XCTestCase {
     }
 
     func test_getFromURL_failsOnRequestError() {
-        let error = someError
-        URLProtocolStub.stub(data: nil, response: nil, error: error)
-        let exp = expectation(description: "Wait for completion")
+        let requestError: NSError? = someError
 
-        makeSUT().get(from: someURL) { result in
-            switch result {
-                case let .failure(receivedError as NSError):
-                    XCTAssertEqual(receivedError.domain, error.domain)
-                    XCTAssertEqual(receivedError.code, error.code)
-                default:
-                    XCTFail("Expected failure with error \(error), got \(result) instead")
-            }
-            exp.fulfill()
-        }
+        let receivedError = resultErrorFor(data: nil, response: nil, error: requestError)
 
-        wait(for: [exp], timeout: 0.1)
+        XCTAssertEqual(receivedError?.domain, requestError?.domain)
+        XCTAssertEqual(receivedError?.code, requestError?.code)
+    }
+
+    func test_getFromURL_failsOnAllNilValues() {
+        XCTAssertNotNil(resultErrorFor(data: nil, response: nil, error: nil))
     }
 
     // MARK: - Helpers
@@ -51,6 +45,26 @@ final class URLSessionNetworkClientTests: XCTestCase {
         let sut = URLSessionNetworkClient(session: .shared)
         trackForMemoryLeaks(sut, file: file, line: line)
         return sut
+    }
+
+    private func resultErrorFor(data: Data?, response: URLResponse?, error: Error?, file: StaticString = #filePath, line: UInt = #line) -> NSError? {
+        URLProtocolStub.stub(data: data, response: response, error: error)
+        let sut = makeSUT(file: file, line: line)
+        let exp = expectation(description: "Wait for completion")
+
+        var receivedError: NSError?
+        sut.get(from: someURL) { result in
+            switch result {
+                case let .failure(error):
+                    receivedError = error as NSError
+                default:
+                    XCTFail("Expected failure, got \(result) instead", file: file, line: line)
+            }
+            exp.fulfill()
+        }
+
+        wait(for: [exp], timeout: 0.1)
+        return receivedError
     }
 
     func trackForMemoryLeaks(_ instance: AnyObject, file: StaticString = #filePath, line: UInt = #line) {
