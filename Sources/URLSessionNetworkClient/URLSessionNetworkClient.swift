@@ -11,8 +11,10 @@ public final class URLSessionNetworkClient {
 
     struct UnexpectedValuesRepresentation: Error { }
 
-    public func get(from url: URL, completion: @escaping ((Result<(Data, HTTPURLResponse), Error>) -> Void)) {
-        session.dataTask(with: url) { data, response, error in
+    public func send(request: Request, completion: @escaping (Result<(Data, HTTPURLResponse), Error>) -> Void) {
+        let urlRequest = request.builder.toURLRequest()
+
+        session.dataTask(with: urlRequest) { data, response, error in
             if let error = error {
                 completion(.failure(error))
             } else if let data = data, let response = response as? HTTPURLResponse {

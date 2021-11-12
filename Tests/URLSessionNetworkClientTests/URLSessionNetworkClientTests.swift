@@ -21,7 +21,7 @@ final class URLSessionNetworkClientTests: XCTestCase {
             exp.fulfill()
         }
 
-        makeSUT().get(from: someURL, completion: { _ in })
+        makeSUT().send(request: Request.basic(baseURL: someURL), completion: { _ in })
 
         wait(for: [exp], timeout: 0.1)
     }
@@ -105,7 +105,7 @@ final class URLSessionNetworkClientTests: XCTestCase {
         let exp = expectation(description: "Wait for completion")
 
         var receivedResult: Result<(Data, HTTPURLResponse), Error>!
-        sut.get(from: someURL) { result in
+        sut.send(request: Request.basic(baseURL: someURL)) { result in
             receivedResult = result
             exp.fulfill()
         }
