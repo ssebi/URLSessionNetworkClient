@@ -67,7 +67,30 @@ final class URLSessionNetworkClientTests: XCTestCase {
         XCTAssertEqual(receivedValues?.response.statusCode, response?.statusCode)
     }
 
+	func test_decode_decodesValidJSONData() throws {
+		let someString = "someString"
+		let jsonData = try JSONSerialization.data(withJSONObject: ["someField": someString])
+		var receivedValue: SomeModel?
+
+		let exp = expectation(description: "Wait for completion")
+		resultFor(data: jsonData, response: anyHTTPURLResponse, error: nil)
+			.decode(SomeModel.self, completion: { result in
+				if let obj = try? result.get() {
+					receivedValue = obj
+					exp.fulfill()
+				}
+			})
+		wait(for: [exp], timeout: 1)
+
+		XCTAssertEqual(receivedValue, SomeModel(someField: someString))
+	}
+
+
     // MARK: - Helpers
+
+	struct SomeModel: Decodable, Equatable {
+		let someField: String
+	}
 
     private func makeSUT(file: StaticString = #filePath, line: UInt = #line) -> URLSessionNetworkClient {
         let sut = URLSessionNetworkClient(session: .shared)
