@@ -31,7 +31,7 @@ final class URLSessionNetworkClientTests: XCTestCase {
 
         let receivedError = resultErrorFor(data: nil, response: nil, error: requestError)
 
-        XCTAssertEqual(receivedError?.domain, requestError?.domain)
+		XCTAssertEqual(receivedError?.domain, "URLSessionNetworkClient.APIError")
         XCTAssertEqual(receivedError?.code, requestError?.code)
     }
 
@@ -99,12 +99,12 @@ final class URLSessionNetworkClientTests: XCTestCase {
         }
     }
 
-    private func resultFor(data: Data?, response: URLResponse?, error: Error?, file: StaticString = #filePath, line: UInt = #line) -> Result<(Data, HTTPURLResponse), Error> {
+    private func resultFor(data: Data?, response: URLResponse?, error: Error?, file: StaticString = #filePath, line: UInt = #line) -> Result<(Data, HTTPURLResponse), APIError> {
         URLProtocolStub.stub(data: data, response: response, error: error)
         let sut = makeSUT(file: file, line: line)
         let exp = expectation(description: "Wait for completion")
 
-        var receivedResult: Result<(Data, HTTPURLResponse), Error>!
+        var receivedResult: Result<(Data, HTTPURLResponse), APIError>!
         sut.send(request: Request.basic(baseURL: someURL)) { result in
             receivedResult = result
             exp.fulfill()
