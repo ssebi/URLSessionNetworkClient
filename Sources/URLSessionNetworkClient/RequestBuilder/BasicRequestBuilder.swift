@@ -17,6 +17,6 @@ struct BasicRequestBuilder: RequestBuilder {
 
     var params: [URLQueryItem]?
 
-    var headers: [String : String] = [:]
+    var headers: [String : String]? = nil
 
 }

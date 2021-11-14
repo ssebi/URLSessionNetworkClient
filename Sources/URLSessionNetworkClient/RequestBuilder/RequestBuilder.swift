@@ -13,7 +13,7 @@ public protocol RequestBuilder {
     var baseURL: URL { get }
     var path: String? { get }
     var params: [URLQueryItem]? { get }
-    var headers: [String: String] { get }
+    var headers: [String: String]? { get }
 
     func toURLRequest() -> URLRequest
 

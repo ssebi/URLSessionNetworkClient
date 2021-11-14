@@ -44,7 +44,7 @@ class RequestBuilderTests: XCTestCase {
 
 		request.allHTTPHeaderFields?.forEach { key, val in
 			XCTAssertEqual(val,
-						   sut.headers.first(where: { $0.key == key })?.value,
+						   sut.headers?.first(where: { $0.key == key })?.value,
 						   "Expected to have the same field value")
 		}
 		XCTAssertEqual(request.allHTTPHeaderFields?.isEmpty, false)
@@ -72,7 +72,7 @@ class MockRequestBuilderEmptyHeaders: RequestBuilder {
 
     var params: [URLQueryItem]?
 
-    var headers: [String : String] = [:]
+    var headers: [String : String]?
 
 }
 
@@ -87,7 +87,7 @@ class MockRequestBuilderWithHeaders: RequestBuilder {
 
 	var params: [URLQueryItem]?
 
-	var headers: [String : String] = ["Content-Type": "application/json"]
+	var headers: [String : String]? = ["Content-Type": "application/json"]
 
 }
 
@@ -101,6 +101,6 @@ class MockRequestBuilderWithQueryItems: RequestBuilder {
 
 	var params: [URLQueryItem]? = [URLQueryItem(name: "name", value: "test")]
 
-	var headers: [String : String] = [:]
+	var headers: [String : String]?
 
 }
