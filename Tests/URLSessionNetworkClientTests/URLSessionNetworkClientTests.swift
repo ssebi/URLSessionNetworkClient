@@ -1,6 +1,6 @@
 
 import XCTest
-import URLSessionNetworkClient
+@testable import URLSessionNetworkClient
 
 final class URLSessionNetworkClientTests: XCTestCase {
 
@@ -85,6 +85,13 @@ final class URLSessionNetworkClientTests: XCTestCase {
 		XCTAssertEqual(receivedValue, SomeModel(someField: someString))
 	}
 
+	func test_send_setsNetworkTask() {
+		let sut = makeSUT()
+
+		let networkTask = sut.send(request: .basic(baseURL: someURL)) { _ in }
+
+		XCTAssertNotNil(networkTask.task)
+	}
 
     // MARK: - Helpers
 

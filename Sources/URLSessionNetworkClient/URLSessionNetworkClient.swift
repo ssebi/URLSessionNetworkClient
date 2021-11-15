@@ -11,10 +11,12 @@ public final class URLSessionNetworkClient {
 
     struct UnexpectedValuesRepresentation: Error { }
 
-    public func send(request: Request, completion: @escaping (Result<(Data, HTTPURLResponse), APIError>) -> Void) {
+	@discardableResult
+    public func send(request: Request, completion: @escaping (Result<(Data, HTTPURLResponse), APIError>) -> Void) -> NetworkTask {
+		let networkTask = NetworkTask()
         let urlRequest = request.builder.toURLRequest()
 
-        session.dataTask(with: urlRequest) { data, response, error in
+		let task = session.dataTask(with: urlRequest) { data, response, error in
             if let error = error {
 				completion(.failure(.networkError(error)))
 			} else if let apiError = APIError.error(from: response) {
@@ -24,7 +26,12 @@ public final class URLSessionNetworkClient {
             } else {
 				completion(.failure(.unknownResponse))
             }
-        }.resume()
+        }
+
+		task.resume()
+		networkTask.set(task)
+
+		return networkTask
     }
 
 }
