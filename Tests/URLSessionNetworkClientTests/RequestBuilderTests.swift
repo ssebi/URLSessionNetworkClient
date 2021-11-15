@@ -11,46 +11,48 @@ import XCTest
 class RequestBuilderTests: XCTestCase {
 
 	func test_toURLRequest_correctlyBuildsHTTPMethod() {
-		let sut = MockRequestBuilderEmptyHeaders()
+		let sut = Request.basic(baseURL: someURL).builder.toURLRequest()
 
-		let request = sut.toURLRequest()
-
-		XCTAssertEqual(sut.method.rawValue.uppercased(), request.httpMethod)
+		XCTAssertEqual("GET", sut.httpMethod)
 	}
 
-	func test_toURLRequest_correctlyBuildsAbsoluteString() {
-		let sut = MockRequestBuilderEmptyHeaders()
+	func test_toURLRequest_correctlyBuildsPath() {
+		let path = "get"
+		let sut = Request.basic(baseURL: someURL, path: path).builder.toURLRequest()
 
-		let request = sut.toURLRequest()
-
-		XCTAssertEqual(sut.baseURL.absoluteString + sut.path!, request.url?.absoluteString)
+		XCTAssertEqual("\(someURL.absoluteString)/get", sut.url?.absoluteString)
 	}
 
 	func test_toURLRequest_correctlyBuildsEmptyHeaderFields() {
-		let sut = MockRequestBuilderEmptyHeaders()
+		let sut = Request.basic(baseURL: someURL).builder.toURLRequest()
 
-		let request = sut.toURLRequest()
-
-		request.allHTTPHeaderFields?.forEach { key, val in
+		sut.allHTTPHeaderFields?.forEach { key, val in
 			XCTFail("Expected to have no headers")
 		}
-		XCTAssertEqual(request.allHTTPHeaderFields?.count, 0)
+		XCTAssertEqual(sut.allHTTPHeaderFields?.count, 0)
 	}
 
 	func test_toURLRequest_correctlyBuildsHeaderFields() {
-		let sut = MockRequestBuilderWithHeaders()
+		let headers = ["Content-Type": "application/json"]
+		let sut = Request.basic(baseURL: someURL, headers: headers).builder.toURLRequest()
 
-		let request = sut.toURLRequest()
-
-		request.allHTTPHeaderFields?.forEach { key, val in
+		sut.allHTTPHeaderFields?.forEach { key, val in
 			XCTAssertEqual(val,
-						   sut.headers?.first(where: { $0.key == key })?.value,
+						   headers.first(where: { $0.key == key })?.value,
 						   "Expected to have the same field value")
 		}
-		XCTAssertEqual(request.allHTTPHeaderFields?.isEmpty, false)
+		XCTAssertEqual(sut.allHTTPHeaderFields?.isEmpty, false)
 	}
 
-	func test_encodeBody_withEmptyData() {
+	func test_toURLRequest_correctlyBuildsQueryComponents() {
+		let params = [URLQueryItem(name: "name", value: "test")]
+		let sut = Request.basic(baseURL: someURL, params: params).builder.toURLRequest()
+
+		XCTAssertEqual(sut.url?.absoluteString.contains(params[0].name.description), true)
+		XCTAssertEqual(sut.url?.absoluteString.contains(params[0].value!.description), true)
+	}
+
+	func test_toURLRequest_correctlyEncodesBodywithEmptyData() {
 		let model: Model? = nil
 		let sut = Request.post(baseURL: someURL, path: "post", body: model)
 
@@ -59,22 +61,13 @@ class RequestBuilderTests: XCTestCase {
 		XCTAssertEqual(request.httpBody, nil)
 	}
 
-	func test_encodeBody_withBodyData() throws {
+	func test_toURLRequest_correctlyEncodesBodyWithData() throws {
 		let model = Model()
 		let sut = Request.post(baseURL: someURL, path: "post", body: model)
 
 		let request = sut.builder.toURLRequest()
 
 		XCTAssertEqual(request.httpBody, try JSONEncoder().encode(model))
-	}
-
-	func test_toURLRequest_correctlyBuildsQueryComponents() {
-		let sut = MockRequestBuilderWithQueryItems()
-
-		let request = sut.toURLRequest()
-
-		XCTAssertEqual(request.url?.absoluteString.contains(sut.params![0].name.description), true)
-		XCTAssertEqual(request.url?.absoluteString.contains(sut.params![0].value!.description), true)
 	}
 
 	// MARK: - Helpers
@@ -84,49 +77,5 @@ class RequestBuilderTests: XCTestCase {
 	private struct Model: Encodable {
 		let someField = "someField"
 	}
-
-}
-
-
-class MockRequestBuilderEmptyHeaders: RequestBuilder {
-
-    var method: HTTPMethod = .get
-
-    var baseURL: URL = URL(string: "https://baseURL.com")!
-
-    var path: String? = "/get"
-
-    var params: [URLQueryItem]?
-
-    var headers: [String : String]?
-
-}
-
-
-class MockRequestBuilderWithHeaders: RequestBuilder {
-
-	var method: HTTPMethod = .get
-
-	var baseURL: URL = URL(string: "https://baseURL.com")!
-
-	var path: String? = "/get"
-
-	var params: [URLQueryItem]?
-
-	var headers: [String : String]? = ["Content-Type": "application/json"]
-
-}
-
-class MockRequestBuilderWithQueryItems: RequestBuilder {
-
-	var method: HTTPMethod = .get
-
-	var baseURL: URL = URL(string: "https://baseURL.com")!
-
-	var path: String? = "/get"
-
-	var params: [URLQueryItem]? = [URLQueryItem(name: "name", value: "test")]
-
-	var headers: [String : String]?
 
 }

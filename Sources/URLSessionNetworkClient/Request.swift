@@ -19,13 +19,15 @@ public struct Request {
 		method: HTTPMethod = .get,
 		baseURL: URL,
 		path: String? = nil,
-		params: [URLQueryItem]? = nil
+		params: [URLQueryItem]? = nil,
+		headers: [String: String]? = nil
 	) -> Request {
 		let builder = BasicRequestBuilder(
 			method: method,
 			baseURL: baseURL,
 			path: path,
-			params: params
+			params: params,
+			headers: headers
 		)
 		return Request(builder: builder)
 	}
