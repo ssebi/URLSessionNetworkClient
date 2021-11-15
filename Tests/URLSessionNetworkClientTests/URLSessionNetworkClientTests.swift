@@ -88,7 +88,11 @@ final class URLSessionNetworkClientTests: XCTestCase {
 	func test_send_setsNetworkTask() {
 		let sut = makeSUT()
 
-		let networkTask = sut.send(request: .basic(baseURL: someURL)) { _ in }
+		let exp = expectation(description: "Wait for completion")
+		let networkTask = sut.send(request: .basic(baseURL: someURL)) { result in
+			exp.fulfill()
+		}
+		wait(for: [exp], timeout: 1)
 
 		XCTAssertNotNil(networkTask.task)
 	}
