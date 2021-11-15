@@ -15,12 +15,17 @@ public protocol RequestBuilder {
     var params: [URLQueryItem]? { get }
     var headers: [String: String]? { get }
 
+	func encodeRequestBody() -> Data?
     func toURLRequest() -> URLRequest
 
 }
 
 
 public extension RequestBuilder {
+
+	func encodeRequestBody() -> Data? {
+		nil
+	}
 
     /// Default `toURLRequest()` implementation for GET requests that don't have a body
     /// - Returns: the resulting `URLRequest`
@@ -37,6 +42,8 @@ public extension RequestBuilder {
         var request = URLRequest(url: components!.url!)
 		request.allHTTPHeaderFields = headers
         request.httpMethod = method.rawValue.uppercased()
+
+		request.httpBody = encodeRequestBody()
 
         return request
     }

@@ -6,7 +6,7 @@
 //
 
 import XCTest
-import URLSessionNetworkClient
+@testable import URLSessionNetworkClient
 
 class RequestBuilderTests: XCTestCase {
 
@@ -50,6 +50,24 @@ class RequestBuilderTests: XCTestCase {
 		XCTAssertEqual(request.allHTTPHeaderFields?.isEmpty, false)
 	}
 
+	func test_encodeBody_withEmptyData() {
+		let model: Model? = nil
+		let sut = Request.post(baseURL: someURL, path: "post", body: model)
+
+		let request = sut.builder.toURLRequest()
+
+		XCTAssertEqual(request.httpBody, nil)
+	}
+
+	func test_encodeBody_withBodyData() throws {
+		let model = Model()
+		let sut = Request.post(baseURL: someURL, path: "post", body: model)
+
+		let request = sut.builder.toURLRequest()
+
+		XCTAssertEqual(request.httpBody, try JSONEncoder().encode(model))
+	}
+
 	func test_toURLRequest_correctlyBuildsQueryComponents() {
 		let sut = MockRequestBuilderWithQueryItems()
 
@@ -57,6 +75,14 @@ class RequestBuilderTests: XCTestCase {
 
 		XCTAssertEqual(request.url?.absoluteString.contains(sut.params![0].name.description), true)
 		XCTAssertEqual(request.url?.absoluteString.contains(sut.params![0].value!.description), true)
+	}
+
+	// MARK: - Helpers
+
+	private let someURL = URL(string: "https://some-url.com")!
+
+	private struct Model: Encodable {
+		let someField = "someField"
 	}
 
 }
