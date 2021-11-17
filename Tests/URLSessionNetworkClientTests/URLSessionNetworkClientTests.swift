@@ -14,6 +14,7 @@ final class URLSessionNetworkClientTests: XCTestCase {
 
     func test_getFromURL_performsGETRequestsWithURL() {
         let exp = expectation(description: "Wait for request")
+		exp.expectedFulfillmentCount = 2
 
         URLProtocolStub.observeRequests { request in
             XCTAssertEqual(request.url, self.someURL)
@@ -21,7 +22,9 @@ final class URLSessionNetworkClientTests: XCTestCase {
             exp.fulfill()
         }
 
-        makeSUT().send(request: Request.basic(baseURL: someURL), completion: { _ in })
+        makeSUT().send(request: Request.basic(baseURL: someURL), completion: { _ in
+			exp.fulfill()
+		})
 
         wait(for: [exp], timeout: 0.1)
     }
