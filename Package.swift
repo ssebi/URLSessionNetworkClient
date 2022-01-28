@@ -24,5 +24,8 @@ let package = Package(
         .testTarget(
             name: "URLSessionNetworkClientTests",
             dependencies: ["URLSessionNetworkClient"]),
+		.testTarget(
+			name: "URLSessionNetworkClientEndToEndTests",
+			dependencies: ["URLSessionNetworkClient"])
     ]
 )

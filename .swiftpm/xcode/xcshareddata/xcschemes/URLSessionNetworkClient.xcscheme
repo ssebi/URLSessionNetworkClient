@@ -70,6 +70,16 @@
                ReferencedContainer = "container:">
             </BuildableReference>
          </TestableReference>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "URLSessionNetworkClientEndToEndTests"
+               BuildableName = "URLSessionNetworkClientEndToEndTests"
+               BlueprintName = "URLSessionNetworkClientEndToEndTests"
+               ReferencedContainer = "container:">
+            </BuildableReference>
+         </TestableReference>
       </Testables>
    </TestAction>
    <LaunchAction
